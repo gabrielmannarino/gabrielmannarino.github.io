@@ -1,0 +1,190 @@
+<!DOCTYPE html>
+<html lang="en">
+	<head>
+		<title>Draggable Cubes</title>
+		<meta charset="utf-8">
+		<meta name="viewport" content="width=device-width, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0">
+		<style>
+			body {
+				font-family: Monospace;
+				background-color: #f0f0f0;
+				margin: 0px;
+				overflow: hidden;
+			}
+		</style>
+	</head>
+	<body>
+
+		<script src="build/three.js"></script>
+
+		<script src="js/controls/DragControls.js"></script>
+		<script src="js/controls/TrackballControls.js"></script>
+		<script src="js/controls/ArcBallControls.js"></script>
+
+		<script>
+			//int mover = 1
+			//double click (if mover == 0 then mover = 1 else mover = 0)
+			//if mover = 1 then (move) else (roda)
+
+			var container;
+			var camera, controls, scene, renderer, raycaster;
+			var objects = [];
+
+			var mouse = new THREE.Vector2(), INTERSECTED;
+			var radius = 100, theta = 0;
+
+
+			init();
+			animate();
+
+			function init() {
+
+				container = document.createElement( 'div' );
+				document.body.appendChild( container );
+
+				camera = new THREE.PerspectiveCamera( 70, window.innerWidth / window.innerHeight, 1, 5000 );
+				camera.position.z = 1000;
+
+				scene = new THREE.Scene();
+				scene.background = new THREE.Color( 0xf0f0f0 );
+
+				scene.add( new THREE.AmbientLight( 0x505050 ) );
+
+				pointLight = new THREE.PointLight( 0xffffff );
+				pointLight.position.set(1,1,2);
+				camera.add(pointLight);
+
+				scene.add( camera );
+
+				var geometry = new THREE.BoxBufferGeometry( 40, 40, 40 );
+
+				for ( var i = 0; i < 200; i ++ ) {
+
+					var object = new THREE.Mesh( geometry, new THREE.MeshLambertMaterial( { color: Math.random() * 0x808080 } ) );
+
+					object.position.x = Math.random() * 1000 - 500;
+					object.position.y = Math.random() * 600 - 300;
+					object.position.z = Math.random() * 800 - 400;
+
+					object.rotation.x = Math.random() * 2 * Math.PI;
+					object.rotation.y = Math.random() * 2 * Math.PI;
+					object.rotation.z = Math.random() * 2 * Math.PI;
+
+					object.scale.x = Math.random() * 2 + 1;
+					object.scale.y = Math.random() * 2 + 1;
+					object.scale.z = Math.random() * 2 + 1;
+
+					object.castShadow = true;
+					object.receiveShadow = true;
+
+					scene.add( object );
+
+					objects.push( object );
+
+				}
+
+				renderer = new THREE.WebGLRenderer( { antialias: true } );
+				renderer.setPixelRatio( window.devicePixelRatio );
+				renderer.setSize( window.innerWidth, window.innerHeight );
+
+				renderer.shadowMap.enabled = true;
+				renderer.shadowMap.type = THREE.PCFShadowMap;
+
+				container.appendChild( renderer.domElement );
+
+				controls = new THREE.TrackballControls( camera, renderer.domElement );
+				controls.rotateSpeed = 1.0;
+				controls.zoomSpeed = 1.0;
+				controls.panSpeed = 1.0;
+				controls.noZoom = false;
+				controls.noPan = false;
+				controls.staticMoving = true;
+				controls.dynamicDampingFactor = 0.3;
+
+				var dragControls = new THREE.DragControls( objects, camera, renderer.domElement );
+				dragControls.addEventListener( 'dragstart', function () {
+
+					controls.enabled = false;
+
+				} );
+				dragControls.addEventListener( 'dragend', function () {
+
+					controls.enabled = true;
+
+				} );
+
+
+				raycaster = new THREE.Raycaster();
+
+				//
+
+				document.addEventListener( 'mousemove', onDocumentMouseMove, false );
+
+				window.addEventListener( 'resize', onWindowResize, false );
+
+			}
+
+			function onWindowResize() {
+
+				camera.aspect = window.innerWidth / window.innerHeight;
+				camera.updateProjectionMatrix();
+
+				renderer.setSize( window.innerWidth, window.innerHeight );
+
+			}
+
+			function onDocumentMouseMove( event ) {
+
+				event.preventDefault();
+
+				mouse.x = ( event.clientX / window.innerWidth ) * 2 - 1;
+				mouse.y = - ( event.clientY / window.innerHeight ) * 2 + 1;
+
+			}
+
+			//
+
+			function animate() {
+
+				requestAnimationFrame( animate );
+
+				render();
+
+			}
+
+			function render() {
+
+				raycaster.setFromCamera( mouse, camera );
+				var intersects = raycaster.intersectObjects( scene.children );
+
+				if ( intersects.length > 0 ) {
+					var targetDistance = intersects[ 0 ].distance;
+
+					if ( INTERSECTED != intersects[ 0 ].object ) {
+
+						if ( INTERSECTED ) INTERSECTED.material.color.setHex( INTERSECTED.currentHex );
+
+						INTERSECTED = intersects[ 0 ].object;
+						INTERSECTED.currentHex = INTERSECTED.material.color.getHex();
+						INTERSECTED.material.color.setHex( 0xffffff );
+
+					}
+
+				} else {
+
+					if ( INTERSECTED ) INTERSECTED.material.color.setHex( INTERSECTED.currentHex );
+
+					INTERSECTED = null;
+				}
+
+
+				controls.update();
+
+				renderer.render( scene, camera );
+
+			}
+
+		</script>
+
+	</body>
+</html>
