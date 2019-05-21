@@ -19,7 +19,7 @@
 
 		<script src="js/controls/DragControls.js"></script>
 		<script src="js/controls/TrackballControls.js"></script>
-		<script src="js/controls/ArcBallControls.js"></script>
+		<script src="js/controls/OrbitControls.js"></script>
 
 		<script>
 			//int mover = 1
@@ -33,6 +33,9 @@
 			var mouse = new THREE.Vector2(), INTERSECTED;
 			var radius = 100, theta = 0;
 
+			var frustumSize = 1000;
+
+
 
 			init();
 			animate();
@@ -42,7 +45,9 @@
 				container = document.createElement( 'div' );
 				document.body.appendChild( container );
 
-				camera = new THREE.PerspectiveCamera( 70, window.innerWidth / window.innerHeight, 1, 5000 );
+				//camera = new THREE.PerspectiveCamera( 70, window.innerWidth / window.innerHeight, 1, 5000 );
+				camera = new THREE.OrthographicCamera( frustumSize * (window.innerWidth / window.innerHeight) / - 2,
+					frustumSize * (window.innerWidth / window.innerHeight) / 2, frustumSize / 2, frustumSize / - 2, 1, 10000 );
 				camera.position.z = 1000;
 
 				scene = new THREE.Scene();
@@ -92,14 +97,10 @@
 
 				container.appendChild( renderer.domElement );
 
-				controls = new THREE.TrackballControls( camera, renderer.domElement );
-				controls.rotateSpeed = 1.0;
+				controls = new THREE.OrbitControls( camera );
+				controls.rotateSpeed = 0.5;
 				controls.zoomSpeed = 1.0;
 				controls.panSpeed = 1.0;
-				controls.noZoom = false;
-				controls.noPan = false;
-				controls.staticMoving = true;
-				controls.dynamicDampingFactor = 0.3;
 
 				var dragControls = new THREE.DragControls( objects, camera, renderer.domElement );
 				dragControls.addEventListener( 'dragstart', function () {
@@ -160,7 +161,7 @@
 				if ( intersects.length > 0 ) {
 					var targetDistance = intersects[ 0 ].distance;
 
-					if ( INTERSECTED != intersects[ 0 ].object ) {
+					if ( ( INTERSECTED != intersects[ 0 ].object ) && ( controls.enabled == true ) ) {
 
 						if ( INTERSECTED ) INTERSECTED.material.color.setHex( INTERSECTED.currentHex );
 
