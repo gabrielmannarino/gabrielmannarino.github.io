@@ -225,7 +225,7 @@ THREE.OrbitControls = function ( object, domElement ) {
 
 		scope.domElement.removeEventListener( 'contextmenu', onContextMenu, false );
 		scope.domElement.removeEventListener( 'mousedown', onMouseDown, false );
-		scope.domElement.removeEventListener( 'wheel', onMouseWheel, false );
+		//scope.domElement.removeEventListener( 'wheel', onMouseWheel, false );
 
 		scope.domElement.removeEventListener( 'touchstart', onTouchStart, false );
 		scope.domElement.removeEventListener( 'touchend', onTouchEnd, false );
@@ -519,19 +519,19 @@ THREE.OrbitControls = function ( object, domElement ) {
 
 	function handleMouseWheel( event ) {
 
-		// console.log( 'handleMouseWheel' );
+//		console.log( 'handleMouseWheel' );
 
-		if ( event.deltaY < 0 ) {
+//		if ( event.deltaY < 0 ) {
 
-			dollyOut( getZoomScale() );
+//			dollyOut( getZoomScale() );
 
-		} else if ( event.deltaY > 0 ) {
+//		} else if ( event.deltaY > 0 ) {
 
-			dollyIn( getZoomScale() );
+//			dollyIn( getZoomScale() );
 
-		}
+//		}
 
-		scope.update();
+//		scope.update();
 
 	}
 
@@ -806,7 +806,7 @@ THREE.OrbitControls = function ( object, domElement ) {
 
 		if ( scope.enabled === false || scope.enableZoom === false || ( state !== STATE.NONE && state !== STATE.ROTATE ) ) return;
 
-		event.preventDefault();
+//		event.preventDefault();
 		event.stopPropagation();
 
 		scope.dispatchEvent( startEvent );

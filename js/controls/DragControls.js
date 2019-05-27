@@ -37,6 +37,7 @@ THREE.DragControls = function ( _objects, _camera, _domElement ) {
 
 	var _sphericalDelta = new THREE.Spherical();
 
+
 	//
 
 	var scope = this;
@@ -69,7 +70,6 @@ THREE.DragControls = function ( _objects, _camera, _domElement ) {
 
 	function handleMouseDownRotate( event ) {
 
-		//console.log( 'handleMouseDownRotate' );
 
 		_rotateStart.set( event.clientX, event.clientY );
 
@@ -107,7 +107,7 @@ THREE.DragControls = function ( _objects, _camera, _domElement ) {
 
 				if ( _moving ) {
 
-					_selected.position.copy( _intersection.sub( _offset ).applyMatrix4( _inverseMatrix ) );
+					//_selected.position.copy( _intersection.sub( _offset ).applyMatrix4( _inverseMatrix ) );
 
 				}
 
@@ -115,7 +115,6 @@ THREE.DragControls = function ( _objects, _camera, _domElement ) {
 
 					_rotateEnd.set( event.clientX, event.clientY );
 					_rotateDelta.subVectors( _rotateEnd, _rotateStart );
-//					_objectRotation;
 
 
 					rotateLeft( 2 * Math.PI * _rotateDelta.x ); // yes, height
@@ -184,9 +183,6 @@ THREE.DragControls = function ( _objects, _camera, _domElement ) {
 
 			_selected = intersects[ 0 ].object;
 
-			_selected.material.color.setHex( _selected.currentHex );
-			_selected.currentHex = _selected.material.color.getHex();
-			_selected.material.color.setHex( 0xffffff );
 
 			if ( _moving )
 			{
@@ -233,7 +229,6 @@ THREE.DragControls = function ( _objects, _camera, _domElement ) {
 
 			scope.dispatchEvent( { type: 'dragend', object: _selected } );
 
-			_selected.material.color.setHex( _selected.currentHex );
 			_selected = null;
 
 		}
