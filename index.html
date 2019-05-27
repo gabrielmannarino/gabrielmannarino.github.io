@@ -35,8 +35,8 @@
 
 			var frustumSize = 1000;
 
-			var scaleConstant = 15;
-			var squareSize = 40;
+			var scaleConstant = 1;
+			var squareSize = 1.5;
 			var globalObject = new THREE.Object3D();
 
 			var highlightBox;
@@ -48,12 +48,33 @@
 			init();
 			animate();
 
+			function toScreenPosition(obj, _camera)
+			{
+			    var vector = new THREE.Vector3();
+
+			    var widthHalf = 0.5*renderer.context.canvas.width;
+			    var heightHalf = 0.5*renderer.context.canvas.height;
+
+			    obj.updateMatrixWorld();
+			    vector.setFromMatrixPosition(obj.matrixWorld);
+			    vector.project(_camera);
+
+			    vector.x = ( vector.x * widthHalf ) + widthHalf;
+			    vector.y = - ( vector.y * heightHalf ) + heightHalf;
+
+			    return { 
+			        x: vector.x,
+			        y: vector.y
+			    };
+
+			};
+
 			function init() {
 				container = document.createElement( 'div' );
 				document.body.appendChild( container );
 
-				camera = new THREE.PerspectiveCamera( 5, window.innerWidth / window.innerHeight, 1, 100000 );
-				camera.position.z = 12000;
+				camera = new THREE.PerspectiveCamera( 5, window.innerWidth / window.innerHeight, 0.1, 10000 );
+				camera.position.z = 50 ;
 
 				scene = new THREE.Scene();
 				scene.background = new THREE.Color( 0x050510 );
@@ -74,7 +95,7 @@
 				globalObject.name = "global";
 
 				highlightBox = new THREE.Mesh(
-					new THREE.SphereBufferGeometry( 1.5 , 32, 32 ),
+					new THREE.SphereBufferGeometry( 1.75 , 32, 32 ),
 					new THREE.MeshLambertMaterial( {
 						emissive: 0xffff00,
 						transparent: true,
@@ -166,7 +187,13 @@
 						//Tentar pegar a posição do mouse em função da distância x e y do objeto ao invés de ser do centro da tela
 						var quatRot = new THREE.Quaternion();
 
-						rotateEnd.set( mouse.x, mouse.y, 0 );
+						objectProjected = new THREE.Vector2();
+						objectNormalized = new THREE.Vector2();
+						objectProjected.set( toScreenPosition( activeObject, camera ).x, toScreenPosition( activeObject, camera ).y );
+						objectNormalized.x = ( objectProjected.x / window.innerWidth ) * 2 - 1;
+						objectNormalized.y = - ( objectProjected.y / window.innerHeight ) * 2 + 1;
+
+						rotateEnd.set( mouse.x - objectNormalized.x, mouse.y - objectNormalized.y, 0 );
 						rotateStart.normalize();
 						rotateEnd.normalize();
 
@@ -196,7 +223,6 @@
 						var targetDistance = intersects[ 0 ].distance;
 						highlightBox.visible = true;
 						highlightBox.position.copy( intersects[ 0 ].object.position );
-						//highlightBox.position.multiplyScalar( scaleConstant );
 						highlightBox.scale.copy( intersects[ 0 ].object.scale )
 						highlightBox.scale.multiplyScalar( 2 * squareSize / 3 );
 					} else {
@@ -213,7 +239,6 @@
 						move = false;
 						highlightBox.position.copy( globalObject.position );
 						highlightBox.scale.copy( globalObject.scale );
-						highlightBox.scale.multiplyScalar( 1.5 );
 						globalObject.name = "active";	
 					} else {
 						//Se não encontrou nenhum objeto e está trocando para mover, deverá ocultar a orb
@@ -230,6 +255,8 @@
 					activeObject = null;
 				}
 			}
+
+
 
 			function onDocumentMouseDown( event ) {
 				event.preventDefault();
@@ -249,10 +276,16 @@
 					}
 				} else {
 					//Processamento de rotação
+					activeObject = scene.getObjectByName( "active" );
+					objectProjected = new THREE.Vector2();
+					objectProjected.set( toScreenPosition( activeObject, camera ).x, toScreenPosition( activeObject, camera ).y );
+					objectNormalized = new THREE.Vector2();
+					objectNormalized.x = ( objectProjected.x / window.innerWidth ) * 2 - 1;
+					objectNormalized.y = - ( objectProjected.y / window.innerHeight ) * 2 + 1;
+
 					mouse.x = ( event.clientX / window.innerWidth ) * 2 - 1;
 					mouse.y = - ( event.clientY / window.innerHeight ) * 2 + 1;
-					activeObject = scene.getObjectByName( "active" );
-					rotateStart.set( mouse.x, mouse.y, 0 );
+					rotateStart.set( mouse.x - objectNormalized.x, mouse.y - objectNormalized.y, 0 );
 				}
 			}
 
@@ -263,7 +296,7 @@
 		        }else{
 		            delta = -1 * event.deltaY;
 		        }
-		        camera.position.z = camera.position.z - ( delta * 5 );
+		        camera.position.z = camera.position.z - ( delta / 120 );
 			}
 
 			function animate() {
