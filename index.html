@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="en">
 	<head>
-		<title>Draggable Cubes</title>
+		<title>ArcBall</title>
 		<meta charset="utf-8">
 		<meta name="viewport" content="width=device-width, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0">
 		<style>
@@ -17,74 +17,56 @@
 
 		<script src="build/three.js"></script>
 		<script>
-
 			var container;
 			var camera, scene, renderer, raycaster, raycasterOrb;
 			var objects = [];
-
 			var plane = new THREE.Plane();
 			var planeIntersection = new THREE.Vector3();
 			var worldPosition = new THREE.Vector3();
 			var inverseMatrix = new THREE.Matrix4();
-
 			var activeObject = null;
 			var activeOrb = null;
 			var objectOffset = new THREE.Vector3();
-
 			var mouse = new THREE.Vector2();
-
 			var frustumSize = 1000;
-
 			var scaleConstant = 1;
 			var squareSize = 1.5;
 			var globalObject = new THREE.Object3D();
-
 			var highlightBox;
 			var move = true;
-
 			var rotateStart = new THREE.Vector3();
 			var rotateEnd = new THREE.Vector3();
 			var rotateZ = false;
-
 			init();
 			animate();
-
 			function toScreenPosition( obj, _camera )
 			{
 			    var vector = new THREE.Vector3();
-
 			    var widthHalf = 0.5 * renderer.context.canvas.width;
 			    var heightHalf = 0.5 * renderer.context.canvas.height;
-
 			    obj.updateMatrixWorld();
 			    vector.setFromMatrixPosition(obj.matrixWorld);
 			    vector.project(_camera);
-
 			    vector.x = ( vector.x * widthHalf ) + widthHalf;
 			    vector.y = - ( vector.y * heightHalf ) + heightHalf;
-
 			    return { 
 			        x: vector.x,
 			        y: vector.y
 			    };
 			};
-
 			function init() {
 				container = document.createElement( 'div' );
 				document.body.appendChild( container );
 				//Obrigado pela dica de usar um FoV baixo!!!
 				camera = new THREE.PerspectiveCamera( 5, window.innerWidth / window.innerHeight, 0.1, 10000 );
 				camera.position.z = 50 ;
-
 				scene = new THREE.Scene();
 				scene.background = new THREE.Color( 0x050510 );
 				scene.add( new THREE.AmbientLight( 0x505050 ) );
-
 				pointLight = new THREE.PointLight( 0xffffff );
 				pointLight.position.set(1,1,2);
 				camera.add(pointLight);
 				scene.add( camera );
-
 				var geometry = new THREE.BoxBufferGeometry( squareSize, squareSize, squareSize );
 				globalObject.position.x = 0;
 				globalObject.position.y = 0;
@@ -93,7 +75,6 @@
 				globalObject.scale.y = scaleConstant;
 				globalObject.scale.z = scaleConstant;
 				globalObject.name = "global";
-
 				highlightBox = new THREE.Mesh(
 					new THREE.SphereBufferGeometry( 1.75 , 32, 32 ),
 					new THREE.MeshLambertMaterial( {
@@ -103,73 +84,54 @@
 					} )
 				);
 				highlightBox.visible = false;
-
 				for ( var i = 0; i < 93; i ++ ) {
 					var object = new THREE.Mesh( geometry, new THREE.MeshLambertMaterial( { color: Math.random() * 0x808080 } ) );
-
 					object.position.x = Math.random() * ( 2 * scaleConstant ) - scaleConstant;
 					object.position.y = Math.random() * ( 2 * scaleConstant ) - scaleConstant;
 					object.position.z = Math.random() * ( 2 * scaleConstant ) - scaleConstant;
-
 					object.rotation.x = Math.random() * 2 * Math.PI;
 					object.rotation.y = Math.random() * 2 * Math.PI;
 					object.rotation.z = Math.random() * 2 * Math.PI;
-
 					object.scale.x = 0.1;
 					object.scale.y = 0.1;
 					object.scale.z = 0.1;
-
 					object.castShadow = true;
 					object.receiveShadow = true;
-
 					object.name = i;
-
 					globalObject.add( object );
 					objects.push( object );
 				}
 				highlightBox.position.x = 0;
 				highlightBox.position.y = 0;
 				highlightBox.position.z = 0;
-
 				highlightBox.scale.x = 20;
 				highlightBox.scale.y = 20;
 				highlightBox.scale.z = 20;
-
 				highlightBox.name = "arc";
-
 				globalObject.add( highlightBox );
 				scene.add( globalObject );
-
 				//Obrigado pela dica do antialias. Funcionou!
 				renderer = new THREE.WebGLRenderer( { antialias: true } );
 				renderer.setPixelRatio( window.devicePixelRatio );
 				renderer.setSize( window.innerWidth, window.innerHeight );
 				renderer.shadowMap.enabled = true;
 				renderer.shadowMap.type = THREE.PCFShadowMap;
-
 				container.appendChild( renderer.domElement );
-
 				raycaster = new THREE.Raycaster();
-
 				document.addEventListener( 'mousemove', onDocumentMouseMove, false );
 				document.addEventListener( 'mousedown', onDocumentMouseDown, false );
 				document.addEventListener( 'mouseup', onDocumentMouseCancel, false );
 				document.addEventListener( 'dblclick', onDocumentDblClick, false );
 				document.addEventListener( 'wheel', onMouseWheel, false );
-
 				window.addEventListener( 'resize', onWindowResize, false );
 			}
-
 			function onWindowResize() {
 				camera.aspect = window.innerWidth / window.innerHeight;
 				camera.updateProjectionMatrix();
-
 				renderer.setSize( window.innerWidth, window.innerHeight );
 			}
-
 			function onDocumentMouseMove( event ) {
 				event.preventDefault();
-
 				mouse.x = ( event.clientX / window.innerWidth ) * 2 - 1;
 				mouse.y = - ( event.clientY / window.innerHeight ) * 2 + 1;
 				raycaster.setFromCamera( mouse, camera );
@@ -190,43 +152,41 @@
 						var quatRot = new THREE.Quaternion();
 						var fatherQuat = new THREE.Quaternion();
 						var fatherQuatInv = new THREE.Quaternion();
-
 						fatherQuat.copy( activeObject.parent.quaternion );
 						fatherQuatInv.copy( fatherQuat );
 						fatherQuatInv.inverse();
 						fatherQuat.normalize();
 						fatherQuatInv.normalize();
-
 						objectProjected = new THREE.Vector2();
 						objectNormalized = new THREE.Vector2();
 						objectProjected.set( toScreenPosition( activeObject, camera ).x, toScreenPosition( activeObject, camera ).y );
 						objectNormalized.x = ( objectProjected.x / window.innerWidth ) * 2 - 1;
 						objectNormalized.y = - ( objectProjected.y / window.innerHeight ) * 2 + 1;
 
-						rotateEnd.set( mouse.x - objectNormalized.x, mouse.y - objectNormalized.y, rotateStart.z );
+						var distCenter = Math.sqrt( ( mouse.x - objectNormalized.x ) * ( mouse.x - objectNormalized.x ) + ( mouse.y - objectNormalized.y ) * ( mouse.y - objectNormalized.y ) );
+						
+
+						distCenter = 0.6 * activeObject.scale.x - distCenter;
+						if ( distCenter < 0 ) { distCenter = 0 };
+						
+						rotateEnd.set( mouse.x - objectNormalized.x, mouse.y - objectNormalized.y, distCenter );
+						console.log(rotateEnd);
 						rotateStart.normalize();
 						rotateEnd.normalize();
-
 						quatRot.setFromUnitVectors( rotateStart, rotateEnd );
 						quatRot;
 						rotateStart.copy( rotateEnd );
-
 						//Aplica a rotação no objeto
 						activeObject.applyQuaternion( fatherQuat );
 						activeObject.applyQuaternion( quatRot );
 						activeObject.applyQuaternion( fatherQuatInv );
 					}
-
 				}
-
 			}
-
 			function onDocumentDblClick( event ) {
 				event.preventDefault();
-
 				raycaster.setFromCamera( mouse, camera );
 				var intersects = raycaster.intersectObjects( globalObject.children );
-
 				if ( intersects.length > 0 ) {
 						//Obs: Não é possível selecionar um objeto para rotação caso um já esteja sendo rotacionado.
 						//Isso foi feito para manter uma lógica consistente de seleção da cena como um todo
@@ -262,22 +222,17 @@
 					}
 				}
 			}
-
 			function onDocumentMouseCancel( event ) {
 				event.preventDefault();
-
 				if ( activeObject ) {
 					activeObject = null;
 					activeOrb = null;
 				}
 			}
-
 			function onDocumentMouseDown( event ) {
 				event.preventDefault();
-
 				raycaster.setFromCamera( mouse, camera );
 				var intersects = raycaster.intersectObjects( globalObject.children );
-
 				if ( move == true ) {
 					//Processamento de objetos individuais
 					if ( intersects.length > 0 ) {
@@ -311,7 +266,6 @@
 						zPosition = 0;
 						rotateZ = false;
 					}
-
 					//Normaliza a posição do mouse e do objeto na tela para ambos estarem entre -1 e 1
 					//Necessário normalizar as coordenadas para a posição Z de rotação ser compatível
 					activeObject = scene.getObjectByName( "active" );
@@ -320,13 +274,17 @@
 					objectNormalized = new THREE.Vector2();
 					objectNormalized.x = ( objectProjected.x / window.innerWidth ) * 2 - 1;
 					objectNormalized.y = - ( objectProjected.y / window.innerHeight ) * 2 + 1;
-
 					mouse.x = ( event.clientX / window.innerWidth ) * 2 - 1;
 					mouse.y = - ( event.clientY / window.innerHeight ) * 2 + 1;
-					rotateStart.set( mouse.x - objectNormalized.x, mouse.y - objectNormalized.y, zPosition );
+
+					var distCenter = Math.sqrt( ( mouse.x - objectNormalized.x ) * ( mouse.x - objectNormalized.x ) + ( mouse.y - objectNormalized.y ) * ( mouse.y - objectNormalized.y ) );
+					distCenter = 0.6 * activeObject.scale.x - distCenter;
+					if ( distCenter < 0 ) { distCenter = 0 };
+					console.log( distCenter );
+
+					rotateStart.set( mouse.x - objectNormalized.x, mouse.y - objectNormalized.y, distCenter );
 				}
 			}
-
 			function onMouseWheel( event ) {
 		        var delta;
 		        if (event.wheelDelta){
@@ -336,16 +294,13 @@
 		        }
 		        camera.position.z = camera.position.z - ( delta / 120 );
 			}
-
 			function animate() {
 				requestAnimationFrame( animate );
 				render();
 			}
-
 			function render() {
 				renderer.render( scene, camera );
 			}
-
 		</script>
 	</body>
 </html>
