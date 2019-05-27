@@ -36,11 +36,14 @@
 			var frustumSize = 1000;
 
 			var scaleConstant = 15;
+			var squareSize = 40;
 			var globalObject = new THREE.Object3D();
 
 			var highlightBox;
 			var move = true;
 
+			var rotateStart = new THREE.Vector3();
+			var rotateEnd = new THREE.Vector3();
 
 			init();
 			animate();
@@ -53,7 +56,7 @@
 				camera.position.z = 12000;
 
 				scene = new THREE.Scene();
-				scene.background = new THREE.Color( 0xf0f0f0 );
+				scene.background = new THREE.Color( 0x050510 );
 				scene.add( new THREE.AmbientLight( 0x505050 ) );
 
 				pointLight = new THREE.PointLight( 0xffffff );
@@ -61,7 +64,7 @@
 				camera.add(pointLight);
 				scene.add( camera );
 
-				var geometry = new THREE.BoxBufferGeometry( 40, 40, 40 );
+				var geometry = new THREE.BoxBufferGeometry( squareSize, squareSize, squareSize );
 				globalObject.position.x = 0;
 				globalObject.position.y = 0;
 				globalObject.position.z = 0;
@@ -71,7 +74,7 @@
 				globalObject.name = "global";
 
 				highlightBox = new THREE.Mesh(
-					new THREE.SphereBufferGeometry( scaleConstant * 1.5 , 32, 32 ),
+					new THREE.SphereBufferGeometry( 1.5 , 32, 32 ),
 					new THREE.MeshLambertMaterial( {
 						emissive: 0xffff00,
 						transparent: true,
@@ -111,8 +114,8 @@
 				highlightBox.scale.y = 20;
 				highlightBox.scale.z = 20;
 
+				globalObject.add( highlightBox );
 				scene.add( globalObject );
-				scene.add( highlightBox );
 
 				renderer = new THREE.WebGLRenderer( { antialias: true } );
 				renderer.setPixelRatio( window.devicePixelRatio );
@@ -147,20 +150,31 @@
 				mouse.y = - ( event.clientY / window.innerHeight ) * 2 + 1;
 				raycaster.setFromCamera( mouse, camera );
 				var intersects = raycaster.intersectObjects( globalObject.children );
-
-				if ( move == true ) {
-					plane.setFromNormalAndCoplanarPoint( camera.getWorldDirection( plane.normal ), worldPosition.setFromMatrixPosition( intersects[ 0 ].object.matrixWorld ) );
-					//Processamento de objetos individuais
-					if ( intersects.length > 0 ) {
-						var rect = renderer.domElement.getBoundingClientRect();
-						if ( activeObject  ) {
-							if ( raycaster.ray.intersectPlane( plane, planeIntersection ) ) {
-								activeObject.position.copy( planeIntersection.sub( objectOffset ).applyMatrix4( inverseMatrix ) );
+				if ( activeObject ) {
+					if ( move == true ) {
+						//Processamento de objetos individuais
+						if ( intersects.length > 0 ) {
+							var rect = renderer.domElement.getBoundingClientRect();
+							if ( activeObject  ) {
+								if ( raycaster.ray.intersectPlane( plane, planeIntersection ) ) {
+									activeObject.position.copy( planeIntersection.sub( objectOffset ).applyMatrix4( inverseMatrix ) );
+								}
 							}
 						}
+					} else {
+						//Processamento de rotação
+						//Tentar pegar a posição do mouse em função da distância x e y do objeto ao invés de ser do centro da tela
+						var quatRot = new THREE.Quaternion();
+
+						rotateEnd.set( mouse.x, mouse.y, 0 );
+						rotateStart.normalize();
+						rotateEnd.normalize();
+
+						quatRot.setFromUnitVectors( rotateStart, rotateEnd );
+						rotateStart.copy( rotateEnd );
+
+						activeObject.applyQuaternion( quatRot );
 					}
-				} else {
-				//Processamento de rotação
 
 				}
 
@@ -182,9 +196,9 @@
 						var targetDistance = intersects[ 0 ].distance;
 						highlightBox.visible = true;
 						highlightBox.position.copy( intersects[ 0 ].object.position );
-						highlightBox.position.multiplyScalar( scaleConstant );
+						//highlightBox.position.multiplyScalar( scaleConstant );
 						highlightBox.scale.copy( intersects[ 0 ].object.scale )
-						highlightBox.scale.multiplyScalar( 2 * scaleConstant );
+						highlightBox.scale.multiplyScalar( 2 * squareSize / 3 );
 					} else {
 						//Se encontrou um objeto e está trocando para mover, deverá ocultar a orb
 						highlightBox.visible = false;
@@ -226,17 +240,19 @@
 				if ( move == true ) {
 					//Processamento de objetos individuais
 					if ( intersects.length > 0 ) {
-						if ( intersects.length > 0 ) {
-							activeObject = intersects[ 0 ].object;
-							if ( raycaster.ray.intersectPlane( plane, planeIntersection ) ) {
-								inverseMatrix.getInverse( activeObject.parent.matrixWorld );
-								objectOffset.copy( planeIntersection ).sub( worldPosition.setFromMatrixPosition( activeObject.matrixWorld ) );
-							}
+						activeObject = intersects[ 0 ].object;
+						plane.setFromNormalAndCoplanarPoint( camera.getWorldDirection( plane.normal ), worldPosition.setFromMatrixPosition( activeObject.matrixWorld ) );
+						if ( raycaster.ray.intersectPlane( plane, planeIntersection ) ) {
+							inverseMatrix.getInverse( activeObject.parent.matrixWorld );
+							objectOffset.copy( planeIntersection ).sub( worldPosition.setFromMatrixPosition( activeObject.matrixWorld ) );
 						}
 					}
 				} else {
 					//Processamento de rotação
+					mouse.x = ( event.clientX / window.innerWidth ) * 2 - 1;
+					mouse.y = - ( event.clientY / window.innerHeight ) * 2 + 1;
 					activeObject = scene.getObjectByName( "active" );
+					rotateStart.set( mouse.x, mouse.y, 0 );
 				}
 			}
 
