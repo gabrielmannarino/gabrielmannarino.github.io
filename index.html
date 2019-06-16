@@ -89,7 +89,7 @@
 					globalObject.add( object );
 					objects.push( object );
 				}
-				globalObject.translateX(1.0);
+				//globalObject.translateX(1.0);
 				scene.add( globalObject );
 				//Obrigado pela dica do antialias. Funcionou!
 				renderer = new THREE.WebGLRenderer( { antialias: true } );
@@ -156,18 +156,18 @@
 						//Aplica a rotação no objeto
 
 						var rotationAxis = scene.getObjectByName( "arc" );
-//						globalObject.translateX( 0 - rotationAxis.position.x );
-//						globalObject.translateY( 0 - rotationAxis.position.y );
-//						globalObject.translateZ( 0 - rotationAxis.position.z );
+						//globalObject.translateX( 0 - rotationAxis.position.x );
+						//globalObject.translateY( 0 - rotationAxis.position.y );
+						//globalObject.translateZ( 0 - rotationAxis.position.z );
 
 						activeObject.applyQuaternion( fatherQuat );
 						activeObject.applyQuaternion( quatRot );
 						activeObject.applyQuaternion( fatherQuatInv );
 						console.log(globalObject.position);
 
-//						globalObject.translateX( rotationAxis.position.x );
-//						globalObject.translateY( rotationAxis.position.y );
-//						globalObject.translateZ( rotationAxis.position.z );
+						//globalObject.translateX( rotationAxis.position.x );
+						//globalObject.translateY( rotationAxis.position.y );
+						//globalObject.translateZ( rotationAxis.position.z );
 
 					}
 				}
@@ -207,6 +207,7 @@
 
 					} else {
 						//Se encontrou um objeto e está trocando para mover, deverá ocultar a orb
+						scene.add( globalObject );
 						var removeSphere = scene.getObjectByName( "arc" );
 						scene.remove( removeSphere );
 						removeSphere = globalObject.getObjectByName( "arc" );
@@ -237,7 +238,7 @@
 						var sclZ = ( bbox.max.z - posZ );
 
 						var highlightBox = new THREE.Mesh(
-							new THREE.SphereBufferGeometry( Math.sqrt( 2 ) * 1.08 , 128, 128 ),
+							new THREE.SphereBufferGeometry( Math.max( sclX, sclY, sclZ ) * Math.sqrt( 2 ) * 1.08 , 128, 128 ),
 							new THREE.MeshLambertMaterial( {
 							emissive: 0xffff00,
 							transparent: true,
@@ -250,15 +251,23 @@
 						highlightBox.position.x = posX;
 						highlightBox.position.y = posY;
 						highlightBox.position.z = posZ;
-						highlightBox.scale.x = Math.max( sclX, sclY, sclZ );
-						highlightBox.scale.y = Math.max( sclX, sclY, sclZ );
-						highlightBox.scale.z = Math.max( sclX, sclY, sclZ );
+
+
+						//highlightBox.scale.x = Math.max( sclX, sclY, sclZ );
+						//highlightBox.scale.y = Math.max( sclX, sclY, sclZ );
+						//highlightBox.scale.z = Math.max( sclX, sclY, sclZ );
+
+						//globalObject.translateX( posX );
+						//globalObject.translateY( posY );
+						//globalObject.translateZ( posZ );
 
 						scene.add( highlightBox );
+						highlightBox.add( globalObject );
 
 						globalObject.name = "active";	
 					} else {
 						//Se não encontrou nenhum objeto e está trocando para mover, deverá ocultar a orb
+						scene.add( globalObject );
 						var removeSphere = scene.getObjectByName( "arc" );
 						scene.remove( removeSphere );
 						removeSphere = globalObject.getObjectByName( "arc" );
