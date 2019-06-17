@@ -120,16 +120,13 @@
 				mouse.x = ( event.clientX / window.innerWidth ) * 2 - 1;
 				mouse.y = - ( event.clientY / window.innerHeight ) * 2 + 1;
 				raycaster.setFromCamera( mouse, camera );
-				var intersects = raycaster.intersectObjects( globalObject.children );
 				if ( activeObject ) {
 					if ( move == true ) {
 						//Processamento de objetos individuais
-						if ( intersects.length > 0 ) {
-							var rect = renderer.domElement.getBoundingClientRect();
-							if ( activeObject  ) {
-								if ( raycaster.ray.intersectPlane( plane, planeIntersection ) ) {
-									activeObject.position.copy( planeIntersection.sub( objectOffset ).applyMatrix4( inverseMatrix ) );
-								}
+						var rect = renderer.domElement.getBoundingClientRect();
+						if ( activeObject  ) {
+							if ( raycaster.ray.intersectPlane( plane, planeIntersection ) ) {
+								activeObject.position.copy( planeIntersection.sub( objectOffset ).applyMatrix4( inverseMatrix ) );
 							}
 						}
 					} else {
