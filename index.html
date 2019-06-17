@@ -36,6 +36,7 @@
 			var rotateStart = new THREE.Vector3();
 			var rotateEnd = new THREE.Vector3();
 			var listaObjetos = [];
+			var orbRadius = 1;
 			init();
 			animate();
 			function toScreenPosition( obj, _camera )
@@ -146,8 +147,11 @@
 						objectProjected.set( toScreenPosition( activeObject, camera ).x, toScreenPosition( activeObject, camera ).y );
 						objectNormalized.x = ( objectProjected.x / window.innerWidth ) * 2 - 1;
 						objectNormalized.y = - ( objectProjected.y / window.innerHeight ) * 2 + 1;
+
+						//Calcula a distância do mouse até o centro de rotação
 						var distCenter = Math.sqrt( ( mouse.x - objectNormalized.x ) * ( mouse.x - objectNormalized.x ) + ( mouse.y - objectNormalized.y ) * ( mouse.y - objectNormalized.y ) );
-						distCenter = 0.6 * activeObject.scale.x - distCenter;
+						var distOrb = orbRadius * ( objectNormalized.x / activeObject.position.x );
+						distCenter = distOrb - distCenter;
 						if ( distCenter < 0 ) { distCenter = 0 };
 						
 						rotateEnd.set( mouse.x - objectNormalized.x, mouse.y - objectNormalized.y, distCenter );
@@ -184,9 +188,10 @@
 
 						intersects[ 0 ].object.name = "active";
 						var targetDistance = intersects[ 0 ].distance;
-				
+
+						orbRadius = 0.35;
 						var highlightBox = new THREE.Mesh(
-							new THREE.SphereBufferGeometry( 1.75 , 32, 32 ),
+							new THREE.SphereBufferGeometry( orbRadius , 32, 32 ),
 							new THREE.MeshLambertMaterial( {
 							emissive: 0xffff00,
 							transparent: true,
@@ -195,7 +200,6 @@
 						);
 						highlightBox.name = "arc";
 						highlightBox.position.copy( intersects[ 0 ].object.position );
-						highlightBox.scale.copy( intersects[ 0 ].object.scale )
 						globalObject.add( highlightBox );
 
 					} else {
@@ -229,8 +233,9 @@
 						var sclY = ( bbox.max.y - posY );
 						var sclZ = ( bbox.max.z - posZ );
 
+						orbRadius = Math.max( sclX, sclY, sclZ ) * Math.sqrt( 3 );
 						var highlightBox = new THREE.Mesh(
-							new THREE.SphereBufferGeometry( Math.max( sclX, sclY, sclZ ) * Math.sqrt( 3 ) , 128, 128 ),
+							new THREE.SphereBufferGeometry( orbRadius , 128, 128 ),
 							new THREE.MeshLambertMaterial( {
 							emissive: 0xffff00,
 							transparent: true,
@@ -243,6 +248,7 @@
 						highlightBox.position.y = posY;
 						highlightBox.position.z = posZ;
 						scene.add( highlightBox );
+						console.log( Math.max( sclX, sclY, sclZ ) * Math.sqrt( 3 ) )
 
 						//Altera o pivot de rotação para coincidir com o centro da highlight box
 						var quatRot = new THREE.Quaternion();
@@ -310,7 +316,9 @@
 					mouse.x = ( event.clientX / window.innerWidth ) * 2 - 1;
 					mouse.y = - ( event.clientY / window.innerHeight ) * 2 + 1;
 					var distCenter = Math.sqrt( ( mouse.x - objectNormalized.x ) * ( mouse.x - objectNormalized.x ) + ( mouse.y - objectNormalized.y ) * ( mouse.y - objectNormalized.y ) );
-					distCenter = 0.6 * activeObject.scale.x - distCenter;
+					var distOrb = orbRadius * ( objectNormalized.x / activeObject.position.x );
+
+					distCenter = distOrb - distCenter;
 					if ( distCenter < 0 ) { distCenter = 0 };
 					rotateStart.set( mouse.x - objectNormalized.x, mouse.y - objectNormalized.y, distCenter );
 				}
