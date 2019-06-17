@@ -27,6 +27,7 @@
 			var activeObject = null;
 			var objectOffset = new THREE.Vector3();
 			var mouse = new THREE.Vector2();
+			var numObjetos = 13;
 			var frustumSize = 1000;
 			var scaleConstant = 1;
 			var squareSize = 1.5;
@@ -34,6 +35,7 @@
 			var move = true;
 			var rotateStart = new THREE.Vector3();
 			var rotateEnd = new THREE.Vector3();
+			var listaObjetos = [];
 			init();
 			animate();
 			function toScreenPosition( obj, _camera )
@@ -72,7 +74,7 @@
 				globalObject.scale.y = scaleConstant;
 				globalObject.scale.z = scaleConstant;
 				globalObject.name = "global";
-				for ( var i = 0; i < 13; i ++ ) {
+				for ( var i = 0; i < numObjetos; i ++ ) {
 					var object = new THREE.Mesh( geometry, new THREE.MeshLambertMaterial( { color: Math.random() * 0x808080 } ) );
 					object.position.x = Math.random() * ( 2 * scaleConstant ) - scaleConstant;
 					object.position.y = Math.random() * ( 2 * scaleConstant ) - scaleConstant;
@@ -88,6 +90,7 @@
 					object.name = i;
 					globalObject.add( object );
 					objects.push( object );
+					listaObjetos.push(object.id);
 				}
 				//globalObject.translateX(1.0);
 				scene.add( globalObject );
@@ -156,19 +159,9 @@
 						//Aplica a rotação no objeto
 
 						var rotationAxis = scene.getObjectByName( "arc" );
-						//globalObject.translateX( 0 - rotationAxis.position.x );
-						//globalObject.translateY( 0 - rotationAxis.position.y );
-						//globalObject.translateZ( 0 - rotationAxis.position.z );
-
 						activeObject.applyQuaternion( fatherQuat );
 						activeObject.applyQuaternion( quatRot );
 						activeObject.applyQuaternion( fatherQuatInv );
-						console.log(globalObject.position);
-
-						//globalObject.translateX( rotationAxis.position.x );
-						//globalObject.translateY( rotationAxis.position.y );
-						//globalObject.translateZ( rotationAxis.position.z );
-
 					}
 				}
 			}
@@ -226,7 +219,6 @@
 						move = false;
 
 						var bbox = new THREE.Box3().setFromObject( globalObject );
-						console.log(bbox);
 
 
 						var posX = ( bbox.max.x + bbox.min.x ) / 2;
@@ -238,7 +230,7 @@
 						var sclZ = ( bbox.max.z - posZ );
 
 						var highlightBox = new THREE.Mesh(
-							new THREE.SphereBufferGeometry( Math.max( sclX, sclY, sclZ ) * Math.sqrt( 2 ) * 1.08 , 128, 128 ),
+							new THREE.SphereBufferGeometry( Math.max( sclX, sclY, sclZ ) * Math.sqrt( 3 ) , 128, 128 ),
 							new THREE.MeshLambertMaterial( {
 							emissive: 0xffff00,
 							transparent: true,
@@ -246,25 +238,33 @@
 							} )
 						);
 
-						//Math.max( sclX, sclY, sclZ )
 						highlightBox.name = "arc";
 						highlightBox.position.x = posX;
 						highlightBox.position.y = posY;
 						highlightBox.position.z = posZ;
-
-
-						//highlightBox.scale.x = Math.max( sclX, sclY, sclZ );
-						//highlightBox.scale.y = Math.max( sclX, sclY, sclZ );
-						//highlightBox.scale.z = Math.max( sclX, sclY, sclZ );
-
-						//globalObject.translateX( posX );
-						//globalObject.translateY( posY );
-						//globalObject.translateZ( posZ );
-
 						scene.add( highlightBox );
-						highlightBox.add( globalObject );
 
-						globalObject.name = "active";	
+						//Altera o pivot de rotação para coincidir com o centro da highlight box
+						var quatRot = new THREE.Quaternion();
+						var quatInv = new THREE.Quaternion();
+						newPos = new THREE.Vector3();
+						newPos.copy( highlightBox.position );
+						newPos.sub( globalObject.position );
+
+						quatRot.copy( globalObject.quaternion );
+						quatInv.copy( quatRot );
+						quatInv.inverse();
+						newPos.applyQuaternion( quatInv );
+
+						for ( var i = 0; i < numObjetos; i ++ ) {
+							var tempChildren = globalObject.getObjectById( listaObjetos[i] );
+							tempChildren.position.sub( newPos );
+						}
+						newPos.applyQuaternion( quatRot );
+
+						globalObject.position.add( newPos );
+						globalObject.name = "active";
+
 					} else {
 						//Se não encontrou nenhum objeto e está trocando para mover, deverá ocultar a orb
 						scene.add( globalObject );
