@@ -147,10 +147,16 @@
 
 						//Calcula a distância do mouse até o centro de rotação
 						var distCenter = Math.sqrt( ( mouse.x - objectNormalized.x ) * ( mouse.x - objectNormalized.x ) + ( mouse.y - objectNormalized.y ) * ( mouse.y - objectNormalized.y ) );
-						var distOrb = orbRadius * ( objectNormalized.x / activeObject.position.x );
-						distCenter = distOrb - distCenter;
-						if ( distCenter < 0 ) { distCenter = 0 };
 						
+						var vector = new THREE.Vector3();
+						activeObject.getWorldPosition( vector );
+
+
+						var distOrb = orbRadius * ( objectNormalized.x / vector.x );
+						distCenter = distOrb - distCenter;
+						console.log(distCenter);
+
+						if ( distCenter < 0 ) { distCenter = 0 };
 						rotateEnd.set( mouse.x - objectNormalized.x, mouse.y - objectNormalized.y, distCenter );
 						rotateStart.normalize();
 						rotateEnd.normalize();
@@ -327,7 +333,7 @@
 		        }else{
 		            delta = -1 * event.deltaY;
 		        }
-		        camera.position.z = camera.position.z - ( delta / 120 );
+		        camera.position.z = camera.position.z - ( delta / 60 );
 			}
 			function animate() {
 				requestAnimationFrame( animate );
